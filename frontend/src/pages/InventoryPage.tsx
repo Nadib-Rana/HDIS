@@ -3,39 +3,55 @@ import MedicineForm from "../components/Inventory/MedicineForm";
 import MedicineList from "../components/Inventory/MedicineList";
 import MedicineEdit from "../components/Inventory/MedicineEdit";
 
-const InventoryPage = () => {
+const MedicinesPage = () => {
+  const [refresh, setRefresh] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [activeTab, setActiveTab] = useState<"add" | "list">("add"); // navbar state
 
-  const triggerRefresh = () => setRefreshKey((prev) => prev + 1);
+  const handleRefresh = () => setRefresh((prev) => prev + 1);
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Inventory Management</h1>
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold">💊 Medicine Management</h1>
 
-      {/* Form section */}
-      {!editingId ? (
-        <MedicineForm onAdded={triggerRefresh} />
-      ) : (
-        <MedicineEdit
-          medicineId={editingId}
-          onUpdated={() => {
-            setEditingId(null);
-            triggerRefresh();
-          }}
-          onCancel={() => setEditingId(null)}
-        />
+      {/* Navbar */}
+      <div className="flex space-x-4 border-b pb-2">
+        <button
+          className={`px-4 py-2 rounded-t-lg font-medium ${
+            activeTab === "add" ? "bg-blue-600 text-white" : "bg-gray-200"
+          }`}
+          onClick={() => setActiveTab("add")}
+        >
+          ➕ Add Medicine
+        </button>
+        <button
+          className={`px-4 py-2 rounded-t-lg font-medium ${
+            activeTab === "list" ? "bg-blue-600 text-white" : "bg-gray-200"
+          }`}
+          onClick={() => setActiveTab("list")}
+        >
+          📋 Medicine List
+        </button>
+      </div>
+
+      {/* Active Section */}
+      {activeTab === "add" && <MedicineForm onAdded={handleRefresh} />}
+      {activeTab === "list" && (
+        <MedicineList onEdit={setEditingId} refresh={refresh} />
       )}
 
-      {/* List section */}
-      <div className="mt-8">
-        <MedicineList
-          key={refreshKey} // ensures list refreshes after add/edit/delete
-          onEdit={(id: string) => setEditingId(id)}
-        />
-      </div>
+      {/* Edit Modal */}
+      {editingId && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <MedicineEdit
+            medicineId={editingId}
+            onClose={() => setEditingId(null)}
+            onUpdated={handleRefresh}
+          />
+        </div>
+      )}
     </div>
   );
 };
 
-export default InventoryPage;
+export default MedicinesPage;

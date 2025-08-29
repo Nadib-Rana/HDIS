@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 interface Medicine {
@@ -8,125 +7,146 @@ interface Medicine {
   category: string;
   price: number;
   stock: number;
-  description: string;
+  description?: string;
+  createdAt: string;
 }
 
-export default function MedicineEdit() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [form, setForm] = useState<Partial<Medicine>>({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+interface MedicineEditProps {
+  medicineId: string;
+  onClose: () => void;
+  onUpdated: () => void;
+}
 
+const API_URL = "http://localhost:5000/api/medicines";
+
+const MedicineEdit: React.FC<MedicineEditProps> = ({ medicineId, onClose, onUpdated }) => {
+  const [formData, setFormData] = useState<Medicine | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Load selected medicine
   useEffect(() => {
     const fetchMedicine = async () => {
       try {
-        const res = await axios.get(`/api/medicines/${id}`);
-        console.log(res);
-        setForm(res.data);
+        const res = await axios.get<Medicine[]>(API_URL);
+        const med = res.data.find((m) => m._id === medicineId);
+        setFormData(med || null);
       } catch (err) {
-        setError("Failed to fetch medicine data.");
+        console.error("❌ Failed to load medicine:", err);
       }
     };
     fetchMedicine();
-  }, [id]);
+  }, [medicineId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!formData) return;
     const { name, value } = e.target;
-    setForm(prev => ({
-      ...prev,
+    setFormData({
+      ...formData,
       [name]: name === "price" || name === "stock" ? Number(value) : value,
-    }));
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData) return;
+
     setLoading(true);
-    setError("");
-
     try {
-      const { name, category, price, stock } = form;
-      if (!name || !category || price == null || stock == null) {
-        setError("Please fill all required fields.");
-        setLoading(false);
-        return;
-      }
-
-      await axios.put(`/api/medicines/${id}`, {
-        name,
-        category,
-        price,
-        stock,
-      });
-
-      navigate("/medicines");
+      await axios.put(`${API_URL}/${medicineId}`, formData);
+      onUpdated(); // refresh list
+      onClose();   // close modal
     } catch (err) {
-      setError("Update failed. Please try again.");
+      console.error("❌ Failed to update medicine:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  if (!formData) return <p className="text-gray-500">Loading...</p>;
+
   return (
-    <div className="max-w-xl mx-auto mt-10 p-6 bg-white shadow rounded">
-      <h2 className="text-2xl font-semibold mb-4">Edit Medicine</h2>
-
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-
+    <div className="p-4 bg-white rounded-2xl shadow-md max-w-lg w-full">
+      <h2 className="text-xl font-semibold mb-4">Edit Medicine</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          value={form.name || ""}
-          onChange={handleChange}
-          placeholder="Medicine Name"
-          className="w-full border px-3 py-2 rounded"
-          required
-        />
-        <input
-          type="text"
-          name="category"
-          value={form.category || ""}
-          onChange={handleChange}
-          placeholder="Category"
-          className="w-full border px-3 py-2 rounded"
-          required
-        />
-        <input
-          type="number"
-          name="price"
-          value={form.price ?? ""}
-          onChange={handleChange}
-          placeholder="Price"
-          className="w-full border px-3 py-2 rounded"
-          required
-        />
-        <input
-          type="number"
-          name="stock"
-          value={form.stock ?? ""}
-          onChange={handleChange}
-          placeholder="Stock"
-          className="w-full border px-3 py-2 rounded"
-          required
-        />
-        <textarea
-          name="description"
-          value={form.description || ""}
-          onChange={handleChange}
-          placeholder="Description"
-          className="w-full border px-3 py-2 rounded"
-          rows={4}
-        />
+        {/* Name */}
+        <div>
+          <label className="block text-sm font-medium">Name</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+          />
+        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-        >
-          {loading ? "Updating..." : "Update Medicine"}
-        </button>
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-medium">Category</label>
+          <input
+            type="text"
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+
+        {/* Price */}
+        <div>
+          <label className="block text-sm font-medium">Price</label>
+          <input
+            type="number"
+            name="price"
+            value={formData.price}
+            onChange={handleChange}
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+
+        {/* Stock */}
+        <div>
+          <label className="block text-sm font-medium">Stock</label>
+          <input
+            type="number"
+            name="stock"
+            value={formData.stock}
+            onChange={handleChange}
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="block text-sm font-medium">Description</label>
+          <textarea
+            name="description"
+            value={formData.description || ""}
+            onChange={handleChange}
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? "Updating..." : "Update"}
+          </button>
+        </div>
       </form>
     </div>
   );
-}
+};
+
+export default MedicineEdit;

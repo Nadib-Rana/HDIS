@@ -26,9 +26,9 @@ const SalesReport = () => {
     const fetchSales = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/reports/sales");
-        // Optional: sort by date
-        const sorted = res.data.sort((a: Sale, b: Sale) =>
-          new Date(a.date).getTime() - new Date(b.date).getTime()
+        const sorted = res.data.sort(
+          (a: Sale, b: Sale) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime()
         );
         setSalesData(sorted);
       } catch (err) {
@@ -39,45 +39,81 @@ const SalesReport = () => {
   }, []);
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">Sales Report</h2>
+    <div className="bg-white rounded-2xl shadow-lg p-6 space-y-8">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+        Progress Sales Dashboard
+      </h2>
 
-      {/* Line Chart */}
-      <div className="w-full h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={salesData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid stroke="#e0e0e0" strokeDasharray="5 5" />
-            <XAxis dataKey="date" tickFormatter={(str) => str.slice(5)} />
-            <YAxis />
-            <Tooltip formatter={(value: number) => `$${value}`} />
-            <Legend verticalAlign="top" height={36} />
-            <Line
-              type="monotone"
-              dataKey="totalSales"
-              stroke="#4f46e5"
-              strokeWidth={3}
-              dot={{ r: 5, stroke: "#4f46e5", strokeWidth: 2, fill: "white" }}
+      {/* Line Chart Section */}
+      <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
+        <h3 className="text-lg font-semibold mb-2 text-gray-700">
+          Sales Trend Over Time
+        </h3>
+        <div className="w-full h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={salesData}
+              margin={{ top: 20, right: 30, left: 10, bottom: 0 }}
             >
-              <LabelList dataKey="totalSales" position="top" formatter={(val) => `$${val}`} />
-            </Line>
-          </LineChart>
-        </ResponsiveContainer>
+              <CartesianGrid stroke="#e0e0e0" strokeDasharray="5 5" />
+              <XAxis dataKey="date" tickFormatter={(str) => str.slice(5)} />
+              <YAxis />
+              <Tooltip formatter={(value: number) => `$${value}`} />
+              <Legend verticalAlign="top" height={36} />
+              <Line
+                type="monotone"
+                dataKey="totalSales"
+                stroke="#4f46e5"
+                strokeWidth={3}
+                dot={{
+                  r: 5,
+                  stroke: "#4f46e5",
+                  strokeWidth: 2,
+                  fill: "white",
+                }}
+              >
+                <LabelList
+                  dataKey="totalSales"
+                  position="top"
+                  formatter={(val) => `$${val}`}
+                />
+              </Line>
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* Bar Chart */}
-      <div className="w-full h-64 mt-6">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={salesData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid stroke="#e0e0e0" strokeDasharray="5 5" />
-            <XAxis dataKey="date" tickFormatter={(str) => str.slice(5)} />
-            <YAxis />
-            <Tooltip formatter={(value: number) => `$${value}`} />
-            <Legend verticalAlign="top" height={36} />
-            <Bar dataKey="totalSales" fill="#10b981" barSize={40} radius={[5, 5, 0, 0]}>
-              <LabelList dataKey="totalSales" position="top" formatter={(val) => `$${val}`} />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+      {/* Bar Chart Section */}
+      <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
+        <h3 className="text-lg font-semibold mb-2 text-gray-700">
+          Total Sales Comparison
+        </h3>
+        <div className="w-full h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={salesData}
+              margin={{ top: 20, right: 30, left: 10, bottom: 0 }}
+            >
+              <CartesianGrid stroke="#e0e0e0" strokeDasharray="5 5" />
+              <XAxis dataKey="date" tickFormatter={(str) => str.slice(5)} />
+              <YAxis />
+              <Tooltip formatter={(value: number) => `$${value}`} />
+              <Legend verticalAlign="top" height={36} />
+              <Bar
+                dataKey="totalSales"
+                fill="#10b981"
+                barSize={40}
+                radius={[8, 8, 0, 0]}
+              >
+                <LabelList
+                  dataKey="totalSales"
+                  position="top"
+                  formatter={(val) => `$${val}`}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );

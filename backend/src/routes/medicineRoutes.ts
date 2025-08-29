@@ -7,7 +7,9 @@ const router = Router();
 
 router.get("/", getMedicines);
 router.post("/", createMedicine);
-router.put("/:id", updateMedicine);
+router.put("/:id", updateMedicine);   // add this
+router.patch("/:id", updateMedicine); // keep this
 router.delete("/:id", deleteMedicine);
+
 
 export default router;
