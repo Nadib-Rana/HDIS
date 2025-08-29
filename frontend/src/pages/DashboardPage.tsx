@@ -1,6 +1,7 @@
 // pages/DashboardPage.tsx
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Dashboard from "../components/Dashboard";
 
 interface Medicine {
   _id: string;
@@ -27,7 +28,7 @@ const DashboardPage = () => {
   }, []);
 
   return (
-    <div className="p-6">
+    <>
       <h2 className="text-xl font-bold mb-4">Dashboard Overview</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -46,7 +47,7 @@ const DashboardPage = () => {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { getMedicines, createMedicine, updateMedicine, deleteMedicine } from "../controllers/medicineController";
 
+//   /api/medicines
 const router = Router();
 
 router.get("/", getMedicines);

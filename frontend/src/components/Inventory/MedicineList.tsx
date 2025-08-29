@@ -50,6 +50,8 @@ const MedicineList = ({ onEdit }: { onEdit: (id: string) => void }) => {
       <table className="min-w-full bg-white shadow rounded-lg">
         <thead>
           <tr className="bg-gray-200 text-gray-700">
+            
+            <th className="py-2 px-4">SI.NO</th>
             <th className="py-2 px-4">Name</th>
             <th className="py-2 px-4">Category</th>
             <th className="py-2 px-4">Price</th>
@@ -58,29 +60,30 @@ const MedicineList = ({ onEdit }: { onEdit: (id: string) => void }) => {
           </tr>
         </thead>
         <tbody>
-          {medicines.map((m) => (
-            <tr key={m._id} className="border-t">
-              <td className="py-2 px-4">{m.name}</td>
-              <td className="py-2 px-4">{m.category}</td>
-              <td className="py-2 px-4">${m.price}</td>
-              <td className="py-2 px-4">{m.stock}</td>
-              <td className="py-2 px-4 space-x-2">
-                <button
-                  onClick={() => onEdit(m._id)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteMedicine(m._id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+  {medicines.map((m, index) => (
+    <tr key={m._id} className="border-t">
+      <td className="py-2 px-4">{index + 1}</td> {/* SI. No */}
+      <td className="py-2 px-4">{m.name}</td>
+      <td className="py-2 px-4">{m.category}</td>
+      <td className="py-2 px-4">${m.price}</td>
+      <td className="py-2 px-4">{m.stock}</td>
+      <td className="py-2 px-4 space-x-2">
+        <button
+          onClick={() => onEdit(m._id)}
+          className="bg-blue-500 text-white px-3 py-1 rounded"
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => deleteMedicine(m._id)}
+          className="bg-red-500 text-white px-3 py-1 rounded"
+        >
+          Delete
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
       </table>
     </div>
   );

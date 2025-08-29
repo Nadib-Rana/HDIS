@@ -42,6 +42,8 @@ export default function SalesList() {
         <table className="w-full">
           <thead className="text-left text-sm text-gray-600">
             <tr>
+              
+              <th className="py-2">NO</th>
               <th className="py-2">Date</th>
               <th>Customer</th>
               <th>Items</th>
@@ -49,8 +51,10 @@ export default function SalesList() {
             </tr>
           </thead>
           <tbody>
-            {sales.map(s => (
+            {sales.map((s , index) => (
               <tr key={s._id} className="border-t">
+
+                <td className="py-2 px-4 bg-green-500">{index+1}</td>
                 <td className="py-2">{dayjs(s.createdAt).format("DD MMM YYYY HH:mm")}</td>
                 <td>{s.customerName || "—"}</td>
                 <td>

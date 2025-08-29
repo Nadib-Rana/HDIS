@@ -18,7 +18,7 @@ const MedicineForm = ({ onAdded }: { onAdded: () => void }) => {
     }
     setLoading(true);
     try {
-      await axios.post("/api/medicines", form);
+      await axios.post("http://localhost:5000/api/medicines", form);
       onAdded();
       setForm({ name: "", category: "", price: 0, stock: 0 });
     } catch (err) {
