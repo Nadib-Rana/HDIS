@@ -1,122 +1,311 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-import {
-  LineChart,
-  Line,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  Legend,
-  LabelList,
-} from "recharts";
+import dayjs from "dayjs";
+import { api } from "../../utils/api";
+import jsPDF from "jspdf";
 
-interface Sale {
-  date: string;
-  totalSales: number;
-}
-
-const SalesReport = () => {
-  const [salesData, setSalesData] = useState<Sale[]>([]);
-
-  useEffect(() => {
-    const fetchSales = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/reports/sales");
-        const sorted = res.data.sort(
-          (a: Sale, b: Sale) =>
-            new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
-        setSalesData(sorted);
-      } catch (err) {
-        console.error("Error fetching sales data:", err);
-      }
-    };
-    fetchSales();
-  }, []);
-
-  return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 space-y-8">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-        Progress Sales Dashboard
-      </h2>
-
-      {/* Line Chart Section */}
-      <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
-        <h3 className="text-lg font-semibold mb-2 text-gray-700">
-          Sales Trend Over Time
-        </h3>
-        <div className="w-full h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={salesData}
-              margin={{ top: 20, right: 30, left: 10, bottom: 0 }}
-            >
-              <CartesianGrid stroke="#e0e0e0" strokeDasharray="5 5" />
-              <XAxis dataKey="date" tickFormatter={(str) => str.slice(5)} />
-              <YAxis />
-              <Tooltip formatter={(value: number) => `$${value}`} />
-              <Legend verticalAlign="top" height={36} />
-              <Line
-                type="monotone"
-                dataKey="totalSales"
-                stroke="#4f46e5"
-                strokeWidth={3}
-                dot={{
-                  r: 5,
-                  stroke: "#4f46e5",
-                  strokeWidth: 2,
-                  fill: "white",
-                }}
-              >
-                <LabelList
-                  dataKey="totalSales"
-                  position="top"
-                  formatter={(val) => `$${val}`}
-                />
-              </Line>
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Bar Chart Section */}
-      <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
-        <h3 className="text-lg font-semibold mb-2 text-gray-700">
-          Total Sales Comparison
-        </h3>
-        <div className="w-full h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={salesData}
-              margin={{ top: 20, right: 30, left: 10, bottom: 0 }}
-            >
-              <CartesianGrid stroke="#e0e0e0" strokeDasharray="5 5" />
-              <XAxis dataKey="date" tickFormatter={(str) => str.slice(5)} />
-              <YAxis />
-              <Tooltip formatter={(value: number) => `$${value}`} />
-              <Legend verticalAlign="top" height={36} />
-              <Bar
-                dataKey="totalSales"
-                fill="#10b981"
-                barSize={40}
-                radius={[8, 8, 0, 0]}
-              >
-                <LabelList
-                  dataKey="totalSales"
-                  position="top"
-                  formatter={(val) => `$${val}`}
-                />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    </div>
-  );
+type Sale = {
+  _id: string;
+  customerName?: string;
+  total: number;
+  discount?: number;
+  createdAt: string;
+  medicines: { medicineId: { name: string }; quantity: number; price: number }[];
 };
 
-export default SalesReport;
+type SalesSummary = {
+  totalSales: number;
+  totalDiscount: number;
+  totalItemsSold: number;
+  averageSale: number;
+  saleCount: number;
+};
+
+export default function SalesReport() {
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [startDate, setStartDate] = useState(dayjs().subtract(2, "day").format("YYYY-MM-DD")); // Default to 08/29/2025
+  const [endDate, setEndDate] = useState(dayjs().format("YYYY-MM-DD")); // Default to 08/31/2025
+
+  const loadSales = async () => {
+    if (dayjs(endDate).isBefore(dayjs(startDate))) {
+      setError("End date cannot be before start date.");
+      setLoading(false);
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+    try {
+      const response = await api.get(`/api/sales?startDate=${startDate}&endDate=${endDate}`);
+      setSales(response.data);
+    } catch (err) {
+      setError("Failed to load sales report.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSales();
+  }, []); // Initial load with default dates
+
+  const handleFilter = () => {
+    loadSales();
+  };
+
+  // Filter sales locally by date range in case API doesn't filter correctly
+  const filteredSales = sales.filter((sale) => {
+    const saleDate = dayjs(sale.createdAt).format("YYYY-MM-DD");
+    return saleDate >= startDate && saleDate <= endDate;
+  });
+
+  const summary: SalesSummary = filteredSales.reduce(
+    (acc, sale) => {
+      const itemsSold = sale.medicines.reduce((sum, m) => sum + m.quantity, 0);
+      return {
+        totalSales: acc.totalSales + sale.total,
+        totalDiscount: acc.totalDiscount + (sale.discount || 0),
+        totalItemsSold: acc.totalItemsSold + itemsSold,
+        averageSale: 0, // Will calculate after reduce
+        saleCount: acc.saleCount + 1,
+      };
+    },
+    { totalSales: 0, totalDiscount: 0, totalItemsSold: 0, averageSale: 0, saleCount: 0 }
+  );
+
+  summary.averageSale = summary.saleCount > 0 ? summary.totalSales / summary.saleCount : 0;
+
+  const topMedicines = filteredSales
+    .flatMap((sale) => sale.medicines)
+    .reduce((acc, item) => {
+      const key = item.medicineId.name;
+      acc[key] = (acc[key] || 0) + item.quantity;
+      return acc;
+    }, {} as Record<string, number>);
+  
+  const sortedMedicines = Object.entries(topMedicines)
+    .sort(([, qtyA], [, qtyB]) => qtyB - qtyA)
+    .slice(0, 5);
+
+  const generateInvoicePDF = (sale: Sale) => {
+    const doc = new jsPDF();
+    const date = dayjs(sale.createdAt).format("DD MMM YYYY HH:mm");
+
+    doc.setFontSize(16);
+    doc.text("Homeopathic Inventory", 10, 10);
+
+    doc.setFontSize(12);
+    doc.text(`Invoice ID: ${sale._id}`, 140, 10);
+    doc.text(`Date: ${date}`, 140, 20);
+    doc.text(`Customer: ${sale.customerName || "N/A"}`, 10, 30);
+
+    // Table headers
+    doc.text("No", 10, 40);
+    doc.text("Medicine", 30, 40);
+    doc.text("Qty", 100, 40);
+    doc.text("Price", 120, 40);
+    doc.text("Total", 150, 40);
+
+    let y = 50;
+    sale.medicines.forEach((m, i) => {
+      doc.text(`${i + 1}`, 10, y);
+      doc.text(`${m.medicineId?.name || ""}`, 30, y);
+      doc.text(`${m.quantity}`, 100, y);
+      doc.text(`${m.price.toFixed(2)} Tk`, 120, y);
+      doc.text(`${(m.quantity * m.price).toFixed(2)} Tk`, 150, y);
+      y += 10;
+    });
+
+    const subtotal = sale.medicines.reduce((sum, m) => sum + m.quantity * m.price, 0);
+
+    doc.text(`Subtotal: ${subtotal.toFixed(2)} Tk`, 150, y);
+    y += 10;
+    doc.text(`Discount: ${(sale.discount || 0).toFixed(2)} Tk`, 150, y);
+    y += 10;
+    doc.text(`Total: ${sale.total.toFixed(2)} Tk`, 150, y);
+
+    y += 20;
+    doc.text("Thank you for your purchase!", 10, y);
+    y += 10;
+    doc.text("Generated by Homeopathic Inventory System", 10, y);
+
+    doc.save(`Invoice_${sale._id}.pdf`);
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-md">
+      <h3 className="text-xl font-bold mb-4 text-gray-800">📊 Sales Report</h3>
+
+      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-end">
+        <div>
+          <label className="text-gray-600 text-sm font-medium">Start Date</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="mt-1 block w-full sm:w-48 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div>
+          <label className="text-gray-600 text-sm font-medium">End Date</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="mt-1 block w-full sm:w-48 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+          
+        </div>
+      </div>
+      
+
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+
+      {loading ? (
+        <div className="text-gray-500">Loading report...</div>
+      ) : filteredSales.length === 0 ? (
+        <div className="text-gray-500">No sales data available for the selected date range.</div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <div className="flex justify-between text-gray-700">
+                <span>Total Sales</span>
+                <span className="font-bold text-green-700">
+                  {summary.totalSales.toFixed(2)} Tk
+                </span>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <div className="flex justify-between text-gray-700">
+                <span>Total Discount</span>
+                <span className="font-bold text-red-600">
+                  {summary.totalDiscount.toFixed(2)} Tk
+                </span>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <div className="flex justify-between text-gray-700">
+                <span>Average Sale</span>
+                <span className="font-bold text-blue-600">
+                  {summary.averageSale.toFixed(2)} Tk
+                </span>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <div className="flex justify-between text-gray-700">
+                <span>Total Items Sold</span>
+                <span className="font-bold text-purple-600">
+                  {summary.totalItemsSold}
+                </span>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <div className="flex justify-between text-gray-700">
+                <span>Total Transactions</span>
+                <span className="font-bold text-indigo-600">
+                  {summary.saleCount}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-50 p-4 rounded-lg border mb-6">
+            <h4 className="text-lg font-semibold text-gray-800 mb-3">
+              Top 5 Medicines Sold
+            </h4>
+            <div className="space-y-2">
+              {sortedMedicines.map(([name, quantity], index) => (
+                <div
+                  key={index}
+                  className="flex justify-between text-sm text-gray-700"
+                >
+                  <span>{name}</span>
+                  <span className="font-medium">{quantity} units</span>
+                </div>
+              ))}
+              {sortedMedicines.length === 0 && (
+                <div className="text-gray-500">No sales data available.</div>
+              )}
+            </div>
+          </div>
+
+          <h4 className="text-lg font-semibold text-gray-800 mb-4">Sales List</h4>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-gray-700">
+              <thead className="bg-gray-100 text-gray-600 uppercase tracking-wide">
+                <tr>
+                  <th className="py-3 px-4 text-left">No</th>
+                  <th className="py-3 px-4 text-left">Date</th>
+                  <th className="py-3 px-4 text-left">Customer</th>
+                  <th className="py-3 px-4 text-left">Items</th>
+                  <th className="py-3 px-4 text-left">Discount</th>
+                  <th className="py-3 px-4 text-left">Total</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSales.map((s, index) => {
+                  const subtotal = s.medicines.reduce(
+                    (sum, m) => sum + m.quantity * m.price,
+                    0
+                  );
+                  return (
+                    <tr
+                      key={s._id}
+                      className="border-t hover:bg-gray-50 transition"
+                    >
+                      <td className="py-3 px-4">{index + 1}</td>
+                      <td className="py-3 px-4">
+                        {dayjs(s.createdAt).format("DD MMM YYYY HH:mm")}
+                      </td>
+                      <td className="py-3 px-4">{s.customerName || "—"}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap gap-2">
+                          {s.medicines.map((m, i) => (
+                            <span
+                              key={i}
+                              className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium"
+                            >
+                              {m.medicineId?.name} × {m.quantity}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        {s.discount ? (
+                          <span className="text-red-600 font-medium">
+                            {s.discount.toFixed(2)} Tk
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-green-700">
+                        {s.total.toFixed(2)} Tk
+                        {s.discount ? (
+                          <span className="text-xs text-gray-500 ml-1">
+                            (was {subtotal.toFixed(2)} Tk)
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => generateInvoicePDF(s)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs shadow"
+                        >
+                          Download Invoice
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
