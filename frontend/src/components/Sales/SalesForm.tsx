@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState} from "react";
 import { api } from "../../utils/api";
 
 type Medicine = { _id: string; name: string; price: number; stock: number };

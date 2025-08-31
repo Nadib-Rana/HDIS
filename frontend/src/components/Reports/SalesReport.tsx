@@ -50,9 +50,7 @@ export default function SalesReport() {
     loadSales();
   }, []); // Initial load with default dates
 
-  const handleFilter = () => {
-    loadSales();
-  };
+ 
 
   // Filter sales locally by date range in case API doesn't filter correctly
   const filteredSales = sales.filter((sale) => {
