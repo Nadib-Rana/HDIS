@@ -81,4 +81,101 @@ Remove a medicine from the database.
 
 ---
 
-Would you like me to help you write Swagger/OpenAPI specs for this next? Or maybe generate a Postman collection for testing?
+
+
+Base URL: `/api/purchases`
+
+---
+
+### 6 `GET /api/purchases`
+
+**Description:**  
+Fetches all purchase records, including populated medicine names.
+
+**Response:**
+```json
+[
+  {
+    "_id": "64f3abc...",
+    "supplierName": "HealthCorp Ltd.",
+    "medicines": [
+      {
+        "medicineId": {
+          "_id": "64f1abc...",
+          "name": "Paracetamol"
+        },
+        "quantity": 100,
+        "price": 5.5
+      }
+    ],
+    "total": 550,
+    "createdAt": "2025-09-05T10:00:00.000Z"
+  }
+]
+```
+
+**Status Codes:**
+- `200 OK`: Success
+- `500 Internal Server Error`: Fetch failure
+
+---
+
+### 7 `POST /api/purchases`
+
+**Description:**  
+Creates a new purchase record and updates medicine stock accordingly.
+
+**Request Body:**
+```json
+{
+  "supplierName": "MediSupply Co.",
+  "medicines": [
+    {
+      "medicineId": "64f1abc123...",
+      "quantity": 50,
+      "price": 6.0
+    },
+    {
+      "medicineId": "64f2def456...",
+      "quantity": 30,
+      "price": 8.0
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "_id": "64f4xyz789...",
+  "supplierName": "MediSupply Co.",
+  "medicines": [
+    {
+      "medicineId": {
+        "_id": "64f1abc123...",
+        "name": "Paracetamol"
+      },
+      "quantity": 50,
+      "price": 6.0
+    },
+    {
+      "medicineId": {
+        "_id": "64f2def456...",
+        "name": "Ibuprofen"
+      },
+      "quantity": 30,
+      "price": 8.0
+    }
+  ],
+  "total": 540,
+  "createdAt": "2025-09-05T18:37:00.000Z"
+}
+```
+
+**Status Codes:**
+- `201 Created`: Success
+- `404 Not Found`: Medicine not found
+- `500 Internal Server Error`: Purchase creation failed
+
+---
+
