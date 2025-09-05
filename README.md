@@ -1,9 +1,16 @@
 
+
 ---
 
-## 🔗 Endpoints
+# 🧪 Pharmacy Management API Documentation
 
-### 1. `GET /api/medicines`
+> Base URL: `/api`
+
+---
+
+## 🔹 Medicines
+
+### `GET /api/medicines`
 Retrieve all medicines.
 
 - **Response:** `200 OK`
@@ -23,7 +30,7 @@ Retrieve all medicines.
 
 ---
 
-### 2. `POST /api/medicines`
+### `POST /api/medicines`
 Create a new medicine entry.
 
 - **Request Body:**
@@ -48,18 +55,18 @@ Create a new medicine entry.
 
 ---
 
-### 3. `PUT /api/medicines/:id`
+### `PUT /api/medicines/:id`
 Replace an existing medicine record.
 
-- **Request Body:** Full object with updated fields
+- **Request Body:** Full object with updated fields  
 - **Response:** `200 OK` or `404 Not Found`
 
 ---
 
-### 4. `PATCH /api/medicines/:id`
+### `PATCH /api/medicines/:id`
 Update specific fields of a medicine.
 
-- **Request Body:** Partial object
+- **Request Body:**
 ```json
 {
   "stock": 75
@@ -70,29 +77,23 @@ Update specific fields of a medicine.
 
 ---
 
-### 5. `DELETE /api/medicines/:id`
+### `DELETE /api/medicines/:id`
 Remove a medicine from the database.
 
 - **Response:** `200 OK` or `404 Not Found`
 
 ---
 
+## 📦 Purchases
 
-
----
-
-
-
-Base URL: `/api/purchases`
+> Base URL: `/api/purchases`
 
 ---
 
-### 6 `GET /api/purchases`
+### `GET /api/purchases`
+Fetch all purchase records, including medicine names.
 
-**Description:**  
-Fetches all purchase records, including populated medicine names.
-
-**Response:**
+- **Response:** `200 OK`
 ```json
 [
   {
@@ -114,18 +115,12 @@ Fetches all purchase records, including populated medicine names.
 ]
 ```
 
-**Status Codes:**
-- `200 OK`: Success
-- `500 Internal Server Error`: Fetch failure
-
 ---
 
-### 7 `POST /api/purchases`
+### `POST /api/purchases`
+Create a new purchase and update medicine stock.
 
-**Description:**  
-Creates a new purchase record and updates medicine stock accordingly.
-
-**Request Body:**
+- **Request Body:**
 ```json
 {
   "supplierName": "MediSupply Co.",
@@ -144,7 +139,7 @@ Creates a new purchase record and updates medicine stock accordingly.
 }
 ```
 
-**Response:**
+- **Response:** `201 Created`
 ```json
 {
   "_id": "64f4xyz789...",
@@ -172,10 +167,157 @@ Creates a new purchase record and updates medicine stock accordingly.
 }
 ```
 
-**Status Codes:**
-- `201 Created`: Success
-- `404 Not Found`: Medicine not found
-- `500 Internal Server Error`: Purchase creation failed
+- **Status Codes:**
+  - `201 Created`: Success  
+  - `404 Not Found`: Medicine not found  
+  - `500 Internal Server Error`: Purchase creation failed
 
 ---
+
+## 💳 Sales
+
+> Base URL: `/api/sales`
+
+---
+
+### `GET /api/sales`
+Fetch all sales records.
+
+- **Response:** `200 OK`
+```json
+[
+  {
+    "_id": "64f6abc...",
+    "medicines": [
+      {
+        "medicineId": "64f1abc...",
+        "quantity": 2,
+        "price": 5.5
+      }
+    ],
+    "total": 11,
+    "discount": 1,
+    "customerName": "John Doe",
+    "createdAt": "2025-09-05T14:00:00.000Z"
+  }
+]
+```
+
+---
+
+### `POST /api/sales`
+Create a new sale. Optionally include customer name and discount.
+
+- **Request Body:**
+```json
+{
+  "medicines": [
+    {
+      "medicineId": "64f1abc123...",
+      "quantity": 2,
+      "price": 5.5
+    },
+    {
+      "medicineId": "64f2def456...",
+      "quantity": 1,
+      "price": 8.0
+    }
+  ],
+  "total": 19.0,
+  "discount": 1.0,
+  "customerName": "Jane Smith"
+}
+```
+
+- **Response:** `201 Created`
+```json
+{
+  "_id": "64f7xyz789...",
+  "medicines": [...],
+  "total": 19.0,
+  "discount": 1.0,
+  "customerName": "Jane Smith",
+  "createdAt": "2025-09-05T18:40:00.000Z"
+}
+```
+
+- **Status Codes:**
+  - `201 Created`: Success  
+  - `400 Bad Request`: Invalid or missing fields  
+  - `500 Internal Server Error`: Sale creation failed
+
+---
+
+## 📊 Reports
+
+> Base URL: `/api/reports`
+
+---
+
+### `GET /api/reports/sales`
+Generate a sales report filtered by date range.
+
+- **Query Parameters:**
+
+| Name   | Type   | Required | Description           |
+|--------|--------|----------|-----------------------|
+| `start`| string | ✅       | Start date (ISO format) |
+| `end`  | string | ✅       | End date (ISO format)   |
+
+- **Example:**
+```
+GET /api/reports/sales?start=2025-09-01&end=2025-09-05
+```
+
+- **Response:** `200 OK`
+```json
+[
+  {
+    "_id": "64f5abc...",
+    "medicines": [
+      {
+        "medicineId": "64f1abc...",
+        "quantity": 10,
+        "price": 5.5
+      }
+    ],
+    "total": 55,
+    "discount": 5,
+    "customerName": "John Doe",
+    "createdAt": "2025-09-03T14:00:00.000Z"
+  }
+]
+```
+
+---
+
+### `GET /api/reports/stock`
+Return medicines with stock less than or equal to a threshold.
+
+- **Query Parameters:**
+
+| Name       | Type   | Required | Description                          |
+|------------|--------|----------|--------------------------------------|
+| `threshold`| number | ❌       | Stock threshold (default: `5`)       |
+
+- **Example:**
+```
+GET /api/reports/stock?threshold=10
+```
+
+- **Response:** `200 OK`
+```json
+[
+  {
+    "_id": "64f1abc...",
+    "name": "Paracetamol",
+    "stock": 3,
+    "category": "Painkiller",
+    "price": 5.5
+  }
+]
+```
+
+---
+
 
