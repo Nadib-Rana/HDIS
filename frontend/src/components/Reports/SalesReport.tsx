@@ -110,18 +110,18 @@ export default function SalesReport() {
       doc.text(`${i + 1}`, 10, y);
       doc.text(`${m.medicineId?.name || ""}`, 30, y);
       doc.text(`${m.quantity}`, 100, y);
-      doc.text(`${m.price.toFixed(2)} Tk`, 120, y);
-      doc.text(`${(m.quantity * m.price).toFixed(2)} Tk`, 150, y);
+      doc.text(`${m.price.toFixed(2)} $`, 120, y);
+      doc.text(`${(m.quantity * m.price).toFixed(2)} $`, 150, y);
       y += 10;
     });
 
     const subtotal = sale.medicines.reduce((sum, m) => sum + m.quantity * m.price, 0);
 
-    doc.text(`Subtotal: ${subtotal.toFixed(2)} Tk`, 150, y);
+    doc.text(`Subtotal: ${subtotal.toFixed(2)} $`, 150, y);
     y += 10;
-    doc.text(`Discount: ${(sale.discount || 0).toFixed(2)} Tk`, 150, y);
+    doc.text(`Discount: ${(sale.discount || 0).toFixed(2)} $`, 150, y);
     y += 10;
-    doc.text(`Total: ${sale.total.toFixed(2)} Tk`, 150, y);
+    doc.text(`Total: ${sale.total.toFixed(2)} $`, 150, y);
 
     y += 20;
     doc.text("Thank you for your purchase!", 10, y);
@@ -171,7 +171,7 @@ export default function SalesReport() {
               <div className="flex justify-between text-gray-700">
                 <span>Total Sales</span>
                 <span className="font-bold text-green-700">
-                  {summary.totalSales.toFixed(2)} Tk
+                 $ {summary.totalSales.toFixed(2)} 
                 </span>
               </div>
             </div>
@@ -179,7 +179,7 @@ export default function SalesReport() {
               <div className="flex justify-between text-gray-700">
                 <span>Total Discount</span>
                 <span className="font-bold text-red-600">
-                  {summary.totalDiscount.toFixed(2)} Tk
+                 $ {summary.totalDiscount.toFixed(2)} 
                 </span>
               </div>
             </div>
@@ -187,7 +187,7 @@ export default function SalesReport() {
               <div className="flex justify-between text-gray-700">
                 <span>Average Sale</span>
                 <span className="font-bold text-blue-600">
-                  {summary.averageSale.toFixed(2)} Tk
+                 $ {summary.averageSale.toFixed(2)} 
                 </span>
               </div>
             </div>
@@ -274,17 +274,17 @@ export default function SalesReport() {
                       <td className="py-3 px-4">
                         {s.discount ? (
                           <span className="text-red-600 font-medium">
-                            {s.discount.toFixed(2)} Tk
+                            {s.discount.toFixed(2)} $
                           </span>
                         ) : (
                           "—"
                         )}
                       </td>
                       <td className="py-3 px-4 font-semibold text-green-700">
-                        {s.total.toFixed(2)} Tk
+                        {s.total.toFixed(2)} $
                         {s.discount ? (
                           <span className="text-xs text-gray-500 ml-1">
-                            (was {subtotal.toFixed(2)} Tk)
+                            (was {subtotal.toFixed(2)} $)
                           </span>
                         ) : null}
                       </td>

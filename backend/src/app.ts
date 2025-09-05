@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import app from "./server";
 import connectDB from "./config/db";
 
+
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
@@ -12,5 +13,3 @@ connectDB().then(() => {
     console.log(`🚀 Server running at http://localhost:${PORT}`);
   });
 });
-
-
